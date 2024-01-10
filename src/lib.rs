@@ -8,6 +8,12 @@ use cons::*;
 pub mod plateau;
 use plateau::*;
 
+pub mod brick;
+use brick::*;
+
+pub mod ball;
+use ball::*;
+
 pub fn main_app() -> Result<()> {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -20,7 +26,7 @@ pub fn main_app() -> Result<()> {
             ..default()
         }))
         .add_plugins(ShapePlugin)
-        .add_systems(Startup, (setup_system, setup_plateau))
+        .add_systems(Startup, (setup_system, setup_plateau, setup_brick, setup_ball))
         .add_systems(Update, (update_plateau_mouse, update_plateau_gamepad))
         .run();
     Ok(())

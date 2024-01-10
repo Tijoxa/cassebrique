@@ -5,7 +5,6 @@ use crate::cons::*;
 
 #[derive(Component)]
 pub struct Plateau;
-const PLATEAU_DIMENSION: Dimension = Dimension { x: 50., y: 10. };
 
 pub fn setup_plateau(mut commands: Commands) {
     let shape = shapes::Rectangle {
