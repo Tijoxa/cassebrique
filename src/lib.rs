@@ -38,6 +38,7 @@ pub fn main_app() -> Result<()> {
                 move_ball_brick,
                 move_ball_raquette,
                 despawn_brick,
+                despawn_ball,
             ),
         )
         .run();

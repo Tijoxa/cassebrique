@@ -18,6 +18,7 @@ pub enum State {
 pub struct Ball {
     pub state: State,
     pub v: Vec3,
+    pub hp: i32,
 }
 const BALL_RADIUS: f32 = 5.;
 
@@ -35,6 +36,7 @@ pub enum Region {
 }
 
 pub fn spawn_ball(mut commands: Commands, keys: Res<Input<KeyCode>>) {
+    // if GamepadButton(GamepadButtonType::South).is_pressed(gamepad, &gamepads) {
     if !keys.just_pressed(KeyCode::Q) {
         return;
     }
@@ -59,11 +61,21 @@ pub fn spawn_ball(mut commands: Commands, keys: Res<Input<KeyCode>>) {
         .insert(Ball {
             state: State::Raquette,
             v: vec3(vx, vy, 0.),
+            hp: 1,
         });
+}
+
+pub fn despawn_ball(mut commands: Commands, ball_query: Query<(Entity, &Ball)>) {
+    for (entity, ball) in ball_query.iter() {
+        if ball.hp <= 0 {
+            commands.entity(entity).despawn();
+        }
+    }
 }
 
 pub fn update_ball_keyboard(mut query: Query<&mut Ball>, keys: Res<Input<KeyCode>>) {
     for mut ball in query.iter_mut() {
+        // if Gamepadbutton(gamepadbuttontype::east).is_pressed(gamepad, &gamepads) {
         if keys.just_pressed(KeyCode::Space) && ball.state == State::Raquette {
             ball.state = State::Free;
         }
@@ -95,8 +107,11 @@ pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
             if ball_t.translation.x <= left_border || ball_t.translation.x >= right_border {
                 ball.v.x *= -1.0;
             }
-            if ball_t.translation.y <= bottom_border || ball_t.translation.y >= top_border {
+            if ball_t.translation.y >= top_border {
                 ball.v.y *= -1.0;
+            } else if ball_t.translation.y <= bottom_border {
+                ball.v.y *= -1.0;
+                ball.hp -= 1;
             }
         }
     }
