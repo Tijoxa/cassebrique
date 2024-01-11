@@ -10,6 +10,8 @@ pub struct Brick {
 pub const BRICK_DIMENSION: Dimension = Dimension { x: 20., y: 20. };
 
 pub fn setup_brick(mut commands: Commands) {
+    // spawn bricks
+    // change shape brick into rounded rectangle
     let shape = shapes::Rectangle {
         extents: Vec2 {
             x: BRICK_DIMENSION.x,
