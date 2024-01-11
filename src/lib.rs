@@ -25,10 +25,11 @@ pub fn main_app() -> Result<()> {
             ..default()
         }))
         .add_plugins(ShapePlugin)
-        .add_systems(Startup, (setup_system, setup_raquette, setup_brick, setup_ball))
+        .add_systems(Startup, (setup_system, setup_raquette, setup_brick))
         .add_systems(
             Update,
             (
+                spawn_ball,
                 update_raquette_mouse,
                 update_raquette_gamepad,
                 update_ball_keyboard,

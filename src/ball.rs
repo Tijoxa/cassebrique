@@ -34,7 +34,11 @@ pub enum Region {
     Unknown,
 }
 
-pub fn setup_ball(mut commands: Commands) {
+pub fn spawn_ball(mut commands: Commands, keys: Res<Input<KeyCode>>) {
+    if !keys.just_pressed(KeyCode::Q) {
+        return;
+    }
+
     let shape = shapes::Circle {
         radius: BALL_RADIUS,
         center: Vec2::ZERO,
@@ -54,7 +58,7 @@ pub fn setup_ball(mut commands: Commands) {
         .insert(Fill::color(Color::ORANGE_RED))
         .insert(Ball {
             state: State::Raquette,
-            v: vec3(0., vy, 0.),
+            v: vec3(vx, vy, 0.),
         });
 }
 
