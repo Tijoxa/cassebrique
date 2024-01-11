@@ -32,9 +32,10 @@ pub fn main_app() -> Result<()> {
                 update_raquette_mouse,
                 update_raquette_gamepad,
                 update_ball_keyboard,
-                move_ball_on_plateau,
+                move_ball_on_raquette,
                 move_ball_ingame,
                 move_ball_brick,
+                move_ball_raquette,
             ),
         )
         .run();
