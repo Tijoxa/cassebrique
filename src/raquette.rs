@@ -4,35 +4,35 @@ use bevy_prototype_lyon::prelude::*;
 use crate::cons::*;
 
 #[derive(Component)]
-pub struct Plateau;
+pub struct Raquette;
 
-pub fn setup_plateau(mut commands: Commands) {
+pub fn setup_raquette(mut commands: Commands) {
     let shape = shapes::Rectangle {
         extents: Vec2 {
-            x: PLATEAU_DIMENSION.x,
-            y: PLATEAU_DIMENSION.y,
+            x: RAQUETTE_DIMENSION.x,
+            y: RAQUETTE_DIMENSION.y,
         },
-        origin: RectangleOrigin::CustomCenter(Vec2 {
-            x: 0.,
-            y: (PLATEAU_DIMENSION.y - GAME_DIMENSION.y) / 2. + THICKNESS,
-        }),
+        origin: RectangleOrigin::CustomCenter(Vec2::ZERO),
     };
-    commands.spawn((
-        ShapeBundle {
+
+    let translation_y = (RAQUETTE_DIMENSION.y - GAME_DIMENSION.y) / 2. + THICKNESS + 10.;
+
+    commands
+        .spawn((ShapeBundle {
             path: GeometryBuilder::build_as(&shape),
             ..default()
-        },
-        Fill::color(Color::PINK),
-        Stroke::new(Color::PURPLE, THICKNESS),
-        Plateau,
-    ));
+        },))
+        .insert(Transform::from_translation(Vec3::new(0., translation_y, 0.)))
+        .insert(Fill::color(Color::PINK))
+        .insert(Stroke::new(Color::PURPLE, THICKNESS))
+        .insert(Raquette);
 }
 
-pub fn update_plateau_mouse(
+pub fn update_raquette_mouse(
     windows: Query<&Window>,
     camera_q: Query<(&Camera, &GlobalTransform)>,
     mut motion_evr: EventReader<MouseMotion>,
-    mut query: Query<&mut Transform, With<Plateau>>,
+    mut query: Query<&mut Transform, With<Raquette>>,
 ) {
     for ev in motion_evr.read() {
         if ev.delta.x.abs() > 0.1 {
@@ -45,8 +45,8 @@ pub fn update_plateau_mouse(
             {
                 for mut transform in query.iter_mut() {
                     transform.translation.x = world_position.x.clamp(
-                        (-GAME_DIMENSION.x + PLATEAU_DIMENSION.x) / 2. + THICKNESS,
-                        (GAME_DIMENSION.x - PLATEAU_DIMENSION.x) / 2. - THICKNESS,
+                        (-GAME_DIMENSION.x + RAQUETTE_DIMENSION.x) / 2. + THICKNESS,
+                        (GAME_DIMENSION.x - RAQUETTE_DIMENSION.x) / 2. - THICKNESS,
                     );
                 }
             }
@@ -54,20 +54,14 @@ pub fn update_plateau_mouse(
     }
 }
 
-pub fn update_plateau_gamepad(
-    gamepads: Res<Gamepads>,
-    axes: Res<Axis<GamepadAxis>>,
-    mut query: Query<&mut Transform, With<Plateau>>,
-) {
+pub fn update_raquette_gamepad(gamepads: Res<Gamepads>, axes: Res<Axis<GamepadAxis>>, mut query: Query<&mut Transform, With<Raquette>>) {
     for gamepad in gamepads.iter() {
-        let left_stick_x = axes
-            .get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
-            .unwrap();
+        let left_stick_x = axes.get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX)).unwrap();
 
         for mut transform in query.iter_mut() {
             transform.translation.x = (transform.translation.x + 10. * left_stick_x.tan()).clamp(
-                (-GAME_DIMENSION.x + PLATEAU_DIMENSION.x) / 2. + THICKNESS,
-                (GAME_DIMENSION.x - PLATEAU_DIMENSION.x) / 2. - THICKNESS,
+                (-GAME_DIMENSION.x + RAQUETTE_DIMENSION.x) / 2. + THICKNESS,
+                (GAME_DIMENSION.x - RAQUETTE_DIMENSION.x) / 2. - THICKNESS,
             );
         }
     }

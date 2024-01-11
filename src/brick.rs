@@ -5,7 +5,7 @@ use crate::cons::*;
 
 #[derive(Component)]
 pub struct Brick;
-const BRICK_DIMENSION: Dimension = Dimension { x: 20., y: 20. };
+pub const BRICK_DIMENSION: Dimension = Dimension { x: 20., y: 20. };
 
 pub fn setup_brick(mut commands: Commands) {
     let shape = shapes::Rectangle {

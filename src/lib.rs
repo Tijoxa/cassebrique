@@ -5,8 +5,8 @@ use bevy_prototype_lyon::prelude::*;
 pub mod cons;
 use cons::*;
 
-pub mod plateau;
-use plateau::*;
+pub mod raquette;
+use raquette::*;
 
 pub mod brick;
 use brick::*;
@@ -19,15 +19,24 @@ pub fn main_app() -> Result<()> {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Casse Brique".into(),
-                resolution:
-                    WindowResolution::new(WINDOW_DIMENSION.x, WINDOW_DIMENSION.y).with_scale_factor_override(1.0),
+                resolution: WindowResolution::new(WINDOW_DIMENSION.x, WINDOW_DIMENSION.y).with_scale_factor_override(1.0),
                 ..default()
             }),
             ..default()
         }))
         .add_plugins(ShapePlugin)
-        .add_systems(Startup, (setup_system, setup_plateau, setup_brick, setup_ball))
-        .add_systems(Update, (update_plateau_mouse, update_plateau_gamepad))
+        .add_systems(Startup, (setup_system, setup_raquette, setup_brick, setup_ball))
+        .add_systems(
+            Update,
+            (
+                update_raquette_mouse,
+                update_raquette_gamepad,
+                update_ball_keyboard,
+                move_ball_on_plateau,
+                move_ball_ingame,
+                move_ball_brick,
+            ),
+        )
         .run();
     Ok(())
 }

@@ -7,4 +7,4 @@ pub const WINDOW_DIMENSION: Dimension = Dimension { x: 600., y: 600. };
 pub const GAME_DIMENSION: Dimension = Dimension { x: 500., y: 500. };
 pub const THICKNESS: f32 = 2.;
 
-pub const PLATEAU_DIMENSION: Dimension = Dimension { x: 50., y: 10. };
+pub const RAQUETTE_DIMENSION: Dimension = Dimension { x: 50., y: 10. };
