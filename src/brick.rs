@@ -4,7 +4,9 @@ use bevy_prototype_lyon::prelude::*;
 use crate::cons::*;
 
 #[derive(Component)]
-pub struct Brick;
+pub struct Brick {
+    pub hp: i32,
+}
 pub const BRICK_DIMENSION: Dimension = Dimension { x: 20., y: 20. };
 
 pub fn setup_brick(mut commands: Commands) {
@@ -22,6 +24,14 @@ pub fn setup_brick(mut commands: Commands) {
             ..default()
         },
         Fill::color(Color::CYAN),
-        Brick,
+        Brick { hp: 2 },
     ));
+}
+
+pub fn despawn_brick(mut commands: Commands, brick_query: Query<(Entity, &Brick)>) {
+    for (entity, brick) in brick_query.iter() {
+        if brick.hp <= 0 {
+            commands.entity(entity).despawn();
+        }
+    }
 }

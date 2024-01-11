@@ -102,13 +102,92 @@ pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+fn move_ball(
+    ball_t: &Mut<'_, Transform>,
+    x2: f32,
+    x3: f32,
+    y3: f32,
+    y4: f32,
+    x4: f32,
+    y2: f32,
+    y1: f32,
+    x1: f32,
+    ball: &mut Mut<'_, Ball>,
+) -> Option<()> {
+    let region = match (ball_t.translation.x, ball_t.translation.y) {
+        _ if (x2..x3).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::Top,
+        _ if (x3..x4).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::TopRight,
+        _ if (x3..x4).contains(&ball_t.translation.x) && (y2..y3).contains(&ball_t.translation.y) => Region::Right,
+        _ if (x3..x4).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::BottomRight,
+        _ if (x2..x3).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::Bottom,
+        _ if (x1..x2).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::BottomLeft,
+        _ if (x1..x2).contains(&ball_t.translation.x) && (y2..y3).contains(&ball_t.translation.y) => Region::Left,
+        _ if (x1..x2).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::TopLeft,
+        _ if (x2..x3).contains(&ball_t.translation.x) && (y2..y3).contains(&ball_t.translation.y) => {
+            let m1 = (y3 - y2) / (x3 - x2);
+            let m2 = -m1;
+
+            let mb1 = (ball_t.translation.y - y2) / (ball_t.translation.x - x2);
+            let mb2 = (ball_t.translation.y - y3) / (ball_t.translation.x - x2);
+
+            match (mb1 < m1, mb2 < m2) {
+                (true, true) => Region::Bottom,
+                (true, false) => Region::Right,
+                (false, false) => Region::Top,
+                (false, true) => Region::Left,
+            }
+        }
+        _ => Region::Unknown,
+    };
+
+    match region {
+        Region::Right => {
+            ball.v.x = ball.v.x.abs();
+        }
+        Region::Left => {
+            ball.v.x = -ball.v.x.abs();
+        }
+        Region::Top => {
+            ball.v.y = ball.v.y.abs();
+        }
+        Region::Bottom => {
+            ball.v.y = -ball.v.y.abs();
+        }
+        Region::TopRight | Region::BottomRight | Region::BottomLeft | Region::TopLeft => {
+            let corner = match region {
+                Region::TopRight => vec3(x3, y3, 0.),
+                Region::BottomRight => vec3(x3, y2, 0.),
+                Region::BottomLeft => vec3(x2, y2, 0.),
+                Region::TopLeft => vec3(x2, y3, 0.),
+                _ => {
+                    unreachable!();
+                }
+            };
+            let cb = (ball_t.translation - corner).abs();
+            if cb.length() >= BALL_RADIUS {
+                return None;
+            }
+
+            let normale = cb.normalize();
+            let dot_normale = ball.v.dot(normale);
+            let tangente = Vec3::new(-normale.y, normale.x, 0.0).normalize();
+            let dot_tangente = ball.v.dot(tangente);
+
+            ball.v = dot_normale * normale - dot_tangente * tangente;
+        }
+        Region::Unknown => return None,
+    }
+    Some(())
+}
+
 pub fn move_ball_brick(
     mut ball_query: Query<(&mut Ball, &mut Transform), With<Ball>>,
-    brick_query: Query<(&Brick, &Transform), Without<Ball>>,
+    mut brick_query: Query<(&mut Brick, &Transform), Without<Ball>>,
 ) {
     for (mut ball, ball_t) in ball_query.iter_mut() {
         if ball.state == State::Free {
-            for (_brick, brick_t) in brick_query.iter() {
+            for (mut brick, brick_t) in brick_query.iter_mut() {
                 let x2 = brick_t.translation.x - BRICK_DIMENSION.x / 2.;
                 let x3 = brick_t.translation.x + BRICK_DIMENSION.x / 2.;
                 let y2 = brick_t.translation.y - BRICK_DIMENSION.y / 2.;
@@ -119,48 +198,9 @@ pub fn move_ball_brick(
                 let y1 = y2 - BALL_RADIUS;
                 let y4 = y3 + BALL_RADIUS;
 
-                let region = match (ball_t.translation.x, ball_t.translation.y) {
-                    _ if (x2..x3).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::Top,
-                    _ if (x3..x4).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::TopRight,
-                    _ if (x3..x4).contains(&ball_t.translation.x) && (y2..y3).contains(&ball_t.translation.y) => Region::Right,
-                    _ if (x3..x4).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::BottomRight,
-                    _ if (x2..x3).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::Bottom,
-                    _ if (x1..x2).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::BottomLeft,
-                    _ if (x1..x2).contains(&ball_t.translation.x) && (y2..y3).contains(&ball_t.translation.y) => Region::Left,
-                    _ if (x1..x2).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::TopLeft,
-                    _ => Region::Unknown,
-                };
-
-                match region {
-                    Region::Right | Region::Left => {
-                        ball.v.x *= -1.0;
-                    }
-                    Region::Top | Region::Bottom => {
-                        ball.v.y *= -1.0;
-                    }
-                    Region::TopRight | Region::BottomRight | Region::BottomLeft | Region::TopLeft => {
-                        let corner = match region {
-                            Region::TopRight => vec3(x3, y3, 0.),
-                            Region::BottomRight => vec3(x3, y2, 0.),
-                            Region::BottomLeft => vec3(x2, y2, 0.),
-                            Region::TopLeft => vec3(x2, y3, 0.),
-                            _ => {
-                                unreachable!();
-                            }
-                        };
-                        let cb = (ball_t.translation - corner).abs();
-                        if cb.length() >= BALL_RADIUS {
-                            return;
-                        }
-
-                        let normale = cb.normalize();
-                        let dot_normale = ball.v.dot(normale);
-                        let tangente = Vec3::new(-normale.y, normale.x, 0.0).normalize();
-                        let dot_tangente = ball.v.dot(tangente);
-
-                        ball.v = dot_normale * normale - dot_tangente * tangente;
-                    }
-                    Region::Unknown => (),
+                if move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball).is_some() {
+                    brick.hp -= 1;
+                    return;
                 }
             }
         }
@@ -184,49 +224,7 @@ pub fn move_ball_raquette(
                 let y1 = y2 - BALL_RADIUS;
                 let y4 = y3 + BALL_RADIUS;
 
-                let region = match (ball_t.translation.x, ball_t.translation.y) {
-                    _ if (x2..x3).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::Top,
-                    _ if (x3..x4).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::TopRight,
-                    _ if (x3..x4).contains(&ball_t.translation.x) && (y2..y3).contains(&ball_t.translation.y) => Region::Right,
-                    _ if (x3..x4).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::BottomRight,
-                    _ if (x2..x3).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::Bottom,
-                    _ if (x1..x2).contains(&ball_t.translation.x) && (y1..y2).contains(&ball_t.translation.y) => Region::BottomLeft,
-                    _ if (x1..x2).contains(&ball_t.translation.x) && (y2..y3).contains(&ball_t.translation.y) => Region::Left,
-                    _ if (x1..x2).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::TopLeft,
-                    _ => Region::Unknown,
-                };
-
-                match region {
-                    Region::Right | Region::Left => {
-                        ball.v.x *= -1.0;
-                    }
-                    Region::Top | Region::Bottom => {
-                        ball.v.y *= -1.0;
-                    }
-                    Region::TopRight | Region::BottomRight | Region::BottomLeft | Region::TopLeft => {
-                        let corner = match region {
-                            Region::TopRight => vec3(x3, y3, 0.),
-                            Region::BottomRight => vec3(x3, y2, 0.),
-                            Region::BottomLeft => vec3(x2, y2, 0.),
-                            Region::TopLeft => vec3(x2, y3, 0.),
-                            _ => {
-                                unreachable!();
-                            }
-                        };
-                        let cb = (ball_t.translation - corner).abs();
-                        if cb.length() >= BALL_RADIUS {
-                            return;
-                        }
-
-                        let normale = cb.normalize();
-                        let dot_normale = ball.v.dot(normale);
-                        let tangente = Vec3::new(-normale.y, normale.x, 0.0).normalize();
-                        let dot_tangente = ball.v.dot(tangente);
-
-                        ball.v = dot_normale * normale - dot_tangente * tangente;
-                    }
-                    Region::Unknown => (),
-                }
+                move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball);
             }
         }
     }
