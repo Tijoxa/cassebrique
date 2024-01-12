@@ -6,13 +6,22 @@ use crate::cons::*;
 #[derive(Component)]
 pub struct Raquette;
 
+pub const RAQUETTE_DIMENSION: Dimension = Dimension { x: 50., y: 10. };
+
+pub fn get_raquette_radius() -> f32 {
+    RAQUETTE_DIMENSION.x.min(RAQUETTE_DIMENSION.y) / 3.
+}
+
 pub fn setup_raquette(mut commands: Commands) {
-    let shape = shapes::Rectangle {
-        extents: Vec2 {
-            x: RAQUETTE_DIMENSION.x,
-            y: RAQUETTE_DIMENSION.y,
-        },
-        origin: RectangleOrigin::CustomCenter(Vec2::ZERO),
+    let shape = shapes::RoundedPolygon {
+        points: vec![
+            Vec2::new(-RAQUETTE_DIMENSION.x / 2., -RAQUETTE_DIMENSION.y / 2.),
+            Vec2::new(RAQUETTE_DIMENSION.x / 2., -RAQUETTE_DIMENSION.y / 2.),
+            Vec2::new(RAQUETTE_DIMENSION.x / 2., RAQUETTE_DIMENSION.y / 2.),
+            Vec2::new(-RAQUETTE_DIMENSION.x / 2., RAQUETTE_DIMENSION.y / 2.),
+        ],
+        radius: RAQUETTE_DIMENSION.x.min(RAQUETTE_DIMENSION.y) / 3.,
+        ..shapes::RoundedPolygon::default()
     };
 
     let translation_y = (RAQUETTE_DIMENSION.y - GAME_DIMENSION.y) / 2. + THICKNESS + 10.;
@@ -24,7 +33,6 @@ pub fn setup_raquette(mut commands: Commands) {
         },))
         .insert(Transform::from_translation(Vec3::new(0., translation_y, 0.)))
         .insert(Fill::color(Color::PINK))
-        .insert(Stroke::new(Color::PURPLE, THICKNESS))
         .insert(Raquette);
 }
 

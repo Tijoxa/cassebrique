@@ -3,9 +3,9 @@ use bevy_prototype_lyon::prelude::*;
 use rand::prelude::*;
 
 use crate::{
-    brick::{Brick, BRICK_DIMENSION},
+    brick::{self, get_brick_radius, Brick, BRICK_DIMENSION},
     cons::*,
-    raquette::Raquette,
+    raquette::{get_raquette_radius, Raquette, RAQUETTE_DIMENSION},
 };
 
 #[derive(PartialEq, Eq, Debug)]
@@ -35,7 +35,7 @@ pub enum Region {
     Unknown,
 }
 
-pub fn spawn_ball(mut commands: Commands, keys: Res<Input<KeyCode>>) {
+pub fn spawn_ball(mut commands: Commands, raquette_query: Query<(&Raquette, &Transform), Without<Ball>>, keys: Res<Input<KeyCode>>) {
     // if GamepadButton(GamepadButtonType::South).is_pressed(gamepad, &gamepads) {
     if !keys.just_pressed(KeyCode::Q) {
         return;
@@ -56,7 +56,11 @@ pub fn spawn_ball(mut commands: Commands, keys: Res<Input<KeyCode>>) {
             path: GeometryBuilder::build_as(&shape),
             ..default()
         },))
-        .insert(Transform::from_translation(Vec3::new(0., translation_y, 0.)))
+        .insert(Transform::from_translation(Vec3::new(
+            get_raquette_x(&raquette_query),
+            translation_y,
+            0.,
+        )))
         .insert(Fill::color(Color::ORANGE_RED))
         .insert(Ball {
             state: State::Raquette,
@@ -88,10 +92,15 @@ pub fn move_ball_on_raquette(
 ) {
     for (ball, mut ball_t) in ball_query.iter_mut() {
         if ball.state == State::Raquette {
-            let (_r, raquette_transform) = raquette_query.single();
-            ball_t.translation.x = raquette_transform.translation.x;
+            let raquette_x = get_raquette_x(&raquette_query);
+            ball_t.translation.x = raquette_x;
         }
     }
+}
+
+fn get_raquette_x(raquette_query: &Query<'_, '_, (&Raquette, &Transform), Without<Ball>>) -> f32 {
+    let (_r, raquette_transform) = raquette_query.single();
+    raquette_transform.translation.x
 }
 
 pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
@@ -129,6 +138,7 @@ fn move_ball(
     y1: f32,
     x1: f32,
     ball: &mut Mut<'_, Ball>,
+    component_radius: f32,
 ) -> Option<()> {
     let region = match (ball_t.translation.x, ball_t.translation.y) {
         _ if (x2..x3).contains(&ball_t.translation.x) && (y3..y4).contains(&ball_t.translation.y) => Region::Top,
@@ -213,7 +223,8 @@ pub fn move_ball_brick(
                 let y1 = y2 - BALL_RADIUS;
                 let y4 = y3 + BALL_RADIUS;
 
-                if move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball).is_some() {
+                let brick_radius = get_brick_radius();
+                if move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball, brick_radius).is_some() {
                     brick.hp -= 1;
                     return;
                 }
@@ -239,7 +250,8 @@ pub fn move_ball_raquette(
                 let y1 = y2 - BALL_RADIUS;
                 let y4 = y3 + BALL_RADIUS;
 
-                move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball);
+                let raquette_radius = get_raquette_radius();
+                move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball, raquette_radius);
             }
         }
     }
