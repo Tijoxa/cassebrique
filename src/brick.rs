@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
-#[allow(unused_imports)]
 use crate::cons::*;
 
 #[derive(Component)]
@@ -35,7 +34,7 @@ pub fn setup_brick(mut commands: Commands) {
         let mut y_buffer = base_y;
 
         while x_buffer > -base_x {
-            x_buffer += base_x;
+            x_buffer += 2. * base_x;
             y_buffer -= BRICK_DIMENSION.y + 25.;
         }
 
