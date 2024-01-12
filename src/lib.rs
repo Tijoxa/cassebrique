@@ -28,21 +28,20 @@ pub fn main_app() -> Result<()> {
         }))
         .add_plugins(ShapePlugin)
         .add_systems(Startup, (setup_system, setup_raquette, setup_brick))
+        .add_systems(Update, (despawn_brick, update_color_brick))
+        .add_systems(Update, (update_raquette_mouse, update_raquette_gamepad))
         .add_systems(
             Update,
             (
                 spawn_ball_keyboard,
                 spawn_ball_gamepad,
-                update_raquette_mouse,
-                update_raquette_gamepad,
+                despawn_ball,
                 update_ball_keyboard,
                 update_ball_gamepad,
                 move_ball_on_raquette,
                 move_ball_ingame,
                 move_ball_brick,
                 move_ball_raquette,
-                despawn_brick,
-                despawn_ball,
             ),
         )
         .run();
