@@ -36,6 +36,11 @@ pub fn setup_raquette(mut commands: Commands) {
         .insert(Raquette);
 }
 
+pub const RAQUETTE_X_CLAMP: (f32, f32) = (
+    (-GAME_DIMENSION.x + THICKNESS + RAQUETTE_DIMENSION.x) / 2.,
+    (GAME_DIMENSION.x - THICKNESS - RAQUETTE_DIMENSION.x) / 2.,
+);
+
 pub fn update_raquette_mouse(
     windows: Query<&Window>,
     camera_q: Query<(&Camera, &GlobalTransform)>,
@@ -52,10 +57,7 @@ pub fn update_raquette_mouse(
                 .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
             {
                 for mut transform in query.iter_mut() {
-                    transform.translation.x = world_position.x.clamp(
-                        (-GAME_DIMENSION.x + RAQUETTE_DIMENSION.x) / 2. + THICKNESS,
-                        (GAME_DIMENSION.x - RAQUETTE_DIMENSION.x) / 2. - THICKNESS,
-                    );
+                    transform.translation.x = world_position.x.clamp(RAQUETTE_X_CLAMP.0, RAQUETTE_X_CLAMP.1);
                 }
             }
         }
@@ -67,10 +69,7 @@ pub fn update_raquette_gamepad(gamepads: Res<Gamepads>, axes: Res<Axis<GamepadAx
         let left_stick_x = axes.get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX)).unwrap();
 
         for mut transform in query.iter_mut() {
-            transform.translation.x = (transform.translation.x + 10. * left_stick_x.tan()).clamp(
-                (-GAME_DIMENSION.x + RAQUETTE_DIMENSION.x) / 2. + THICKNESS,
-                (GAME_DIMENSION.x - RAQUETTE_DIMENSION.x) / 2. - THICKNESS,
-            );
+            transform.translation.x = (transform.translation.x + 10. * left_stick_x.tan()).clamp(RAQUETTE_X_CLAMP.0, RAQUETTE_X_CLAMP.1);
         }
     }
 }
