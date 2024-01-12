@@ -55,7 +55,6 @@ pub fn spawn_ball_keyboard(
     spawn_ball_internal(&mut commands, &raquette_query);
 }
 
-// TODO: fix
 pub fn spawn_ball_gamepad(
     mut commands: Commands,
     ball_query: Query<&Ball, With<Ball>>,
@@ -126,7 +125,6 @@ pub fn update_ball_keyboard(mut query: Query<&mut Ball>, keys: Res<Input<KeyCode
     }
 }
 
-// TODO: fix
 pub fn update_ball_gamepad(mut query: Query<&mut Ball>, buttons: Res<Input<GamepadButton>>, gamepads: Res<Gamepads>) {
     let a_button = match gamepad_handler::get_a_button(gamepads) {
         Some(value) => value,
@@ -162,10 +160,10 @@ fn get_raquette_y(raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>
     raquette_transform.translation.y
 }
 
-pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
+pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>, time: Res<Time>) {
     for (mut ball, mut ball_t) in query.iter_mut() {
         if ball.state == State::Free {
-            ball_t.translation += ball.v;
+            ball_t.translation += ball.v * 80. * time.delta_seconds();
 
             let left_border = (-GAME_DIMENSION.x + THICKNESS) / 2.;
             let right_border = (GAME_DIMENSION.x - THICKNESS) / 2.;

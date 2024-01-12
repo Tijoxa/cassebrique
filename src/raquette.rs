@@ -64,7 +64,12 @@ pub fn update_raquette_mouse(
     }
 }
 
-pub fn update_raquette_gamepad(gamepads: Res<Gamepads>, axes: Res<Axis<GamepadAxis>>, mut query: Query<&mut Transform, With<Raquette>>) {
+pub fn update_raquette_gamepad(
+    gamepads: Res<Gamepads>,
+    axes: Res<Axis<GamepadAxis>>,
+    mut query: Query<&mut Transform, With<Raquette>>,
+    time: Res<Time>,
+) {
     for gamepad in gamepads.iter() {
         let left_stick_x = match gamepad_handler::get_leftstickx(&axes, gamepad) {
             Some(value) => value,
@@ -72,7 +77,8 @@ pub fn update_raquette_gamepad(gamepads: Res<Gamepads>, axes: Res<Axis<GamepadAx
         };
 
         for mut transform in query.iter_mut() {
-            transform.translation.x = (transform.translation.x + 10. * left_stick_x.tan()).clamp(RAQUETTE_X_CLAMP.0, RAQUETTE_X_CLAMP.1);
+            transform.translation.x =
+                (transform.translation.x + 250. * time.delta_seconds() * left_stick_x.tan()).clamp(RAQUETTE_X_CLAMP.0, RAQUETTE_X_CLAMP.1);
         }
     }
 }
