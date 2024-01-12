@@ -35,12 +35,12 @@ pub enum Region {
     Unknown,
 }
 
-fn get_raquette_x(raquette_query: &Query<'_, '_, (&Raquette, &Transform), Without<Ball>>) -> f32 {
+fn get_raquette_x(raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>) -> f32 {
     let (_r, raquette_transform) = raquette_query.single();
     raquette_transform.translation.x
 }
 
-fn get_raquette_y(raquette_query: &Query<'_, '_, (&Raquette, &Transform), Without<Ball>>) -> f32 {
+fn get_raquette_y(raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>) -> f32 {
     let (_r, raquette_transform) = raquette_query.single();
     raquette_transform.translation.y
 }
@@ -143,7 +143,7 @@ pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
 
 #[allow(clippy::too_many_arguments)]
 fn move_ball(
-    ball_t: &Mut<'_, Transform>,
+    ball_t: &Mut<Transform>,
     x2: f32,
     x3: f32,
     y3: f32,
@@ -152,7 +152,7 @@ fn move_ball(
     y2: f32,
     y1: f32,
     x1: f32,
-    ball: &mut Mut<'_, Ball>,
+    ball: &mut Mut<Ball>,
     component_radius: f32,
 ) -> Option<()> {
     let region = match (ball_t.translation.x, ball_t.translation.y) {
