@@ -1,43 +1,38 @@
-use bevy::ecs::system::{Res, Resource};
+use bevy::ecs::system::Res;
 
 pub mod gamepad_handler {
-    use bevy::input::gamepad::{Gamepad, GamepadButton, GamepadButtonType};
+    use bevy::input::{
+        gamepad::{Gamepad, GamepadAxis, GamepadAxisType, GamepadButton, GamepadButtonType, Gamepads},
+        Axis,
+    };
 
     use super::*;
 
-    #[derive(Resource)]
-    pub struct MyGamepad(Gamepad);
-
-    pub fn get_a_button(my_gamepad: Option<Res<MyGamepad>>) -> Option<GamepadButton> {
-        let gamepad = match get_gamepad(my_gamepad) {
-            Ok(value) => value,
-            Err(value) => return value,
-        };
-        let a_button = GamepadButton {
-            gamepad,
-            button_type: GamepadButtonType::East,
-        };
-        Some(a_button)
+    pub fn get_leftstickx(axes: &Res<Axis<GamepadAxis>>, gamepad: Gamepad) -> Option<f32> {
+        axes.get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX))
     }
 
-    pub fn get_b_button(my_gamepad: Option<Res<MyGamepad>>) -> Option<GamepadButton> {
-        let gamepad = match get_gamepad(my_gamepad) {
-            Ok(value) => value,
-            Err(value) => return value,
-        };
-        let b_button = GamepadButton {
-            gamepad,
-            button_type: GamepadButtonType::South,
-        };
-        Some(b_button)
-    }
-
-    fn get_gamepad(my_gamepad: Option<Res<MyGamepad>>) -> Result<Gamepad, Option<GamepadButton>> {
-        let gamepad = if let Some(gp) = my_gamepad {
-            gp.0
+    pub fn get_a_button(gamepads: Res<Gamepads>) -> Option<GamepadButton> {
+        if let Some(gamepad) = gamepads.iter().next() {
+            let a_button = GamepadButton {
+                gamepad,
+                button_type: GamepadButtonType::East,
+            };
+            Some(a_button)
         } else {
-            return Err(None);
-        };
-        Ok(gamepad)
+            None
+        }
+    }
+
+    pub fn get_b_button(gamepads: Res<Gamepads>) -> Option<GamepadButton> {
+        if let Some(gamepad) = gamepads.iter().next() {
+            let b_button = GamepadButton {
+                gamepad,
+                button_type: GamepadButtonType::South,
+            };
+            Some(b_button)
+        } else {
+            None
+        }
     }
 }

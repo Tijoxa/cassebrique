@@ -61,7 +61,7 @@ pub fn spawn_ball_gamepad(
     ball_query: Query<&Ball, With<Ball>>,
     raquette_query: Query<(&Raquette, &Transform), Without<Ball>>,
     buttons: Res<Input<GamepadButton>>,
-    my_gamepad: Option<Res<gamepad_handler::MyGamepad>>,
+    gamepads: Res<Gamepads>,
 ) {
     for ball in ball_query.iter() {
         if ball.state == State::Raquette {
@@ -69,7 +69,7 @@ pub fn spawn_ball_gamepad(
         }
     }
 
-    let b_button = match gamepad_handler::get_b_button(my_gamepad) {
+    let b_button = match gamepad_handler::get_b_button(gamepads) {
         Some(value) => value,
         None => return,
     };
@@ -127,12 +127,8 @@ pub fn update_ball_keyboard(mut query: Query<&mut Ball>, keys: Res<Input<KeyCode
 }
 
 // TODO: fix
-pub fn update_ball_gamepad(
-    mut query: Query<&mut Ball>,
-    buttons: Res<Input<GamepadButton>>,
-    my_gamepad: Option<Res<gamepad_handler::MyGamepad>>,
-) {
-    let a_button = match gamepad_handler::get_a_button(my_gamepad) {
+pub fn update_ball_gamepad(mut query: Query<&mut Ball>, buttons: Res<Input<GamepadButton>>, gamepads: Res<Gamepads>) {
+    let a_button = match gamepad_handler::get_a_button(gamepads) {
         Some(value) => value,
         None => return,
     };

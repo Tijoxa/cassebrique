@@ -1,7 +1,7 @@
 use bevy::{input::mouse::MouseMotion, prelude::*};
 use bevy_prototype_lyon::prelude::*;
 
-use crate::cons::*;
+use crate::{cons::*, resources::gamepad_handler};
 
 #[derive(Component)]
 pub struct Raquette;
@@ -66,7 +66,10 @@ pub fn update_raquette_mouse(
 
 pub fn update_raquette_gamepad(gamepads: Res<Gamepads>, axes: Res<Axis<GamepadAxis>>, mut query: Query<&mut Transform, With<Raquette>>) {
     for gamepad in gamepads.iter() {
-        let left_stick_x = axes.get(GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX)).unwrap();
+        let left_stick_x = match gamepad_handler::get_leftstickx(&axes, gamepad) {
+            Some(value) => value,
+            None => return,
+        };
 
         for mut transform in query.iter_mut() {
             transform.translation.x = (transform.translation.x + 10. * left_stick_x.tan()).clamp(RAQUETTE_X_CLAMP.0, RAQUETTE_X_CLAMP.1);
