@@ -128,12 +128,12 @@ pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
             let bottom_border = (-GAME_DIMENSION.y + THICKNESS) / 2.;
             let top_border = (GAME_DIMENSION.y - THICKNESS) / 2.;
 
-            if ball_t.translation.x <= left_border || ball_t.translation.x >= right_border {
+            if ball_t.translation.x - BALL_RADIUS <= left_border || ball_t.translation.x + BALL_RADIUS >= right_border {
                 ball.v.x *= -1.0;
             }
-            if ball_t.translation.y >= top_border {
+            if ball_t.translation.y + BALL_RADIUS >= top_border {
                 ball.v.y *= -1.0;
-            } else if ball_t.translation.y <= bottom_border {
+            } else if ball_t.translation.y - BALL_RADIUS <= bottom_border {
                 ball.v.y *= -1.0;
                 ball.hp -= 1;
             }
