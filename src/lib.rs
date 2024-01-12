@@ -14,6 +14,8 @@ use brick::*;
 pub mod ball;
 use ball::*;
 
+pub mod resources;
+
 pub fn main_app() -> Result<()> {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -29,10 +31,12 @@ pub fn main_app() -> Result<()> {
         .add_systems(
             Update,
             (
-                spawn_ball,
+                spawn_ball_keyboard,
+                spawn_ball_gamepad,
                 update_raquette_mouse,
                 update_raquette_gamepad,
                 update_ball_keyboard,
+                update_ball_gamepad,
                 move_ball_on_raquette,
                 move_ball_ingame,
                 move_ball_brick,

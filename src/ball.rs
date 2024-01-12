@@ -6,6 +6,7 @@ use crate::{
     brick::{get_brick_radius, Brick, BRICK_DIMENSION},
     cons::*,
     raquette::{get_raquette_radius, Raquette, RAQUETTE_DIMENSION},
+    resources::*,
 };
 
 #[derive(PartialEq, Eq, Debug)]
@@ -35,17 +36,7 @@ pub enum Region {
     Unknown,
 }
 
-fn get_raquette_x(raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>) -> f32 {
-    let (_r, raquette_transform) = raquette_query.single();
-    raquette_transform.translation.x
-}
-
-fn get_raquette_y(raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>) -> f32 {
-    let (_r, raquette_transform) = raquette_query.single();
-    raquette_transform.translation.y
-}
-
-pub fn spawn_ball(
+pub fn spawn_ball_keyboard(
     mut commands: Commands,
     ball_query: Query<&Ball, With<Ball>>,
     raquette_query: Query<(&Raquette, &Transform), Without<Ball>>,
@@ -56,17 +47,47 @@ pub fn spawn_ball(
             return;
         }
     }
-    // if GamepadButton(GamepadButtonType::South).is_pressed(gamepad, &gamepads) {
+
     if !keys.just_pressed(KeyCode::Q) {
         return;
     }
 
+    spawn_ball_internal(&mut commands, &raquette_query);
+}
+
+// TODO: fix
+pub fn spawn_ball_gamepad(
+    mut commands: Commands,
+    ball_query: Query<&Ball, With<Ball>>,
+    raquette_query: Query<(&Raquette, &Transform), Without<Ball>>,
+    buttons: Res<Input<GamepadButton>>,
+    my_gamepad: Option<Res<gamepad_handler::MyGamepad>>,
+) {
+    for ball in ball_query.iter() {
+        if ball.state == State::Raquette {
+            return;
+        }
+    }
+
+    let b_button = match gamepad_handler::get_b_button(my_gamepad) {
+        Some(value) => value,
+        None => return,
+    };
+
+    if !buttons.just_pressed(b_button) {
+        return;
+    }
+
+    spawn_ball_internal(&mut commands, &raquette_query);
+}
+
+fn spawn_ball_internal(commands: &mut Commands, raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>) {
     let shape = shapes::Circle {
         radius: BALL_RADIUS,
         center: Vec2::ZERO,
     };
 
-    let translation_y = get_raquette_y(&raquette_query) + RAQUETTE_DIMENSION.y / 2. + BALL_RADIUS;
+    let translation_y = get_raquette_y(raquette_query) + RAQUETTE_DIMENSION.y / 2. + BALL_RADIUS;
 
     let mut rng = thread_rng();
     let vx = rng.gen_range(-0.5..0.5);
@@ -77,7 +98,7 @@ pub fn spawn_ball(
             ..default()
         },))
         .insert(Transform::from_translation(Vec3::new(
-            get_raquette_x(&raquette_query),
+            get_raquette_x(raquette_query),
             translation_y,
             0.,
         )))
@@ -99,8 +120,25 @@ pub fn despawn_ball(mut commands: Commands, ball_query: Query<(Entity, &Ball)>) 
 
 pub fn update_ball_keyboard(mut query: Query<&mut Ball>, keys: Res<Input<KeyCode>>) {
     for mut ball in query.iter_mut() {
-        // if Gamepadbutton(gamepadbuttontype::east).is_pressed(gamepad, &gamepads) {
         if keys.just_pressed(KeyCode::Space) && ball.state == State::Raquette {
+            ball.state = State::Free;
+        }
+    }
+}
+
+// TODO: fix
+pub fn update_ball_gamepad(
+    mut query: Query<&mut Ball>,
+    buttons: Res<Input<GamepadButton>>,
+    my_gamepad: Option<Res<gamepad_handler::MyGamepad>>,
+) {
+    let a_button = match gamepad_handler::get_a_button(my_gamepad) {
+        Some(value) => value,
+        None => return,
+    };
+
+    for mut ball in query.iter_mut() {
+        if buttons.just_pressed(a_button) && ball.state == State::Raquette {
             ball.state = State::Free;
         }
     }
@@ -116,6 +154,16 @@ pub fn move_ball_on_raquette(
             ball_t.translation.x = raquette_x;
         }
     }
+}
+
+fn get_raquette_x(raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>) -> f32 {
+    let (_r, raquette_transform) = raquette_query.single();
+    raquette_transform.translation.x
+}
+
+fn get_raquette_y(raquette_query: &Query<(&Raquette, &Transform), Without<Ball>>) -> f32 {
+    let (_r, raquette_transform) = raquette_query.single();
+    raquette_transform.translation.y
 }
 
 pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
@@ -139,6 +187,61 @@ pub fn move_ball_ingame(mut query: Query<(&mut Ball, &mut Transform)>) {
             }
         }
     }
+}
+
+pub fn move_ball_brick(
+    mut ball_query: Query<(&mut Ball, &mut Transform), With<Ball>>,
+    mut brick_query: Query<(&mut Brick, &Transform), Without<Ball>>,
+) {
+    for (mut ball, ball_t) in ball_query.iter_mut() {
+        if ball.state == State::Free {
+            for (mut brick, brick_t) in brick_query.iter_mut() {
+                let brick_radius = get_brick_radius();
+
+                let (x2, x3, y2, y3, x1, x4, y1, y4) = get_component_border(brick_t, brick_radius, BRICK_DIMENSION, BALL_RADIUS);
+
+                if move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball, brick_radius).is_some() {
+                    brick.hp -= 1;
+                    return;
+                }
+            }
+        }
+    }
+}
+
+pub fn move_ball_raquette(
+    mut ball_query: Query<(&mut Ball, &mut Transform), With<Ball>>,
+    raquette_query: Query<(&Raquette, &Transform), Without<Ball>>,
+) {
+    for (mut ball, ball_t) in ball_query.iter_mut() {
+        if ball.state == State::Free {
+            for (_raquette, raquette_t) in raquette_query.iter() {
+                let raquette_radius = get_raquette_radius();
+
+                let (x2, x3, y2, y3, x1, x4, y1, y4) = get_component_border(raquette_t, raquette_radius, RAQUETTE_DIMENSION, BALL_RADIUS);
+
+                move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball, raquette_radius);
+            }
+        }
+    }
+}
+
+fn get_component_border(
+    component_t: &Transform,
+    component_radius: f32,
+    component_dimension: Vec2,
+    ball_radius: f32,
+) -> (f32, f32, f32, f32, f32, f32, f32, f32) {
+    let x2 = component_t.translation.x - component_dimension.x / 2. + component_radius;
+    let x3 = component_t.translation.x + component_dimension.x / 2. - component_radius;
+    let y2 = component_t.translation.y - component_dimension.y / 2. + component_radius;
+    let y3 = component_t.translation.y + component_dimension.y / 2. - component_radius;
+
+    let x1 = x2 - ball_radius - component_radius;
+    let x4 = x3 + ball_radius + component_radius;
+    let y1 = y2 - ball_radius - component_radius;
+    let y4 = y3 + ball_radius + component_radius;
+    (x2, x3, y2, y3, x1, x4, y1, y4)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -219,59 +322,4 @@ fn move_ball(
         Region::Unknown => return None,
     }
     Some(())
-}
-
-fn get_component_border(
-    component_t: &Transform,
-    component_radius: f32,
-    component_dimension: Vec2,
-    ball_radius: f32,
-) -> (f32, f32, f32, f32, f32, f32, f32, f32) {
-    let x2 = component_t.translation.x - component_dimension.x / 2. + component_radius;
-    let x3 = component_t.translation.x + component_dimension.x / 2. - component_radius;
-    let y2 = component_t.translation.y - component_dimension.y / 2. + component_radius;
-    let y3 = component_t.translation.y + component_dimension.y / 2. - component_radius;
-
-    let x1 = x2 - ball_radius - component_radius;
-    let x4 = x3 + ball_radius + component_radius;
-    let y1 = y2 - ball_radius - component_radius;
-    let y4 = y3 + ball_radius + component_radius;
-    (x2, x3, y2, y3, x1, x4, y1, y4)
-}
-
-pub fn move_ball_brick(
-    mut ball_query: Query<(&mut Ball, &mut Transform), With<Ball>>,
-    mut brick_query: Query<(&mut Brick, &Transform), Without<Ball>>,
-) {
-    for (mut ball, ball_t) in ball_query.iter_mut() {
-        if ball.state == State::Free {
-            for (mut brick, brick_t) in brick_query.iter_mut() {
-                let brick_radius = get_brick_radius();
-
-                let (x2, x3, y2, y3, x1, x4, y1, y4) = get_component_border(brick_t, brick_radius, BRICK_DIMENSION, BALL_RADIUS);
-
-                if move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball, brick_radius).is_some() {
-                    brick.hp -= 1;
-                    return;
-                }
-            }
-        }
-    }
-}
-
-pub fn move_ball_raquette(
-    mut ball_query: Query<(&mut Ball, &mut Transform), With<Ball>>,
-    raquette_query: Query<(&Raquette, &Transform), Without<Ball>>,
-) {
-    for (mut ball, ball_t) in ball_query.iter_mut() {
-        if ball.state == State::Free {
-            for (_raquette, raquette_t) in raquette_query.iter() {
-                let raquette_radius = get_raquette_radius();
-
-                let (x2, x3, y2, y3, x1, x4, y1, y4) = get_component_border(raquette_t, raquette_radius, RAQUETTE_DIMENSION, BALL_RADIUS);
-
-                move_ball(&ball_t, x2, x3, y3, y4, x4, y2, y1, x1, &mut ball, raquette_radius);
-            }
-        }
-    }
 }
