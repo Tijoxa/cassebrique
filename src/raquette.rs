@@ -6,7 +6,7 @@ use crate::cons::*;
 #[derive(Component)]
 pub struct Raquette;
 
-pub const RAQUETTE_DIMENSION: Dimension = Dimension { x: 50., y: 10. };
+pub const RAQUETTE_DIMENSION: Vec2 = Vec2 { x: 50., y: 10. };
 
 pub fn get_raquette_radius() -> f32 {
     RAQUETTE_DIMENSION.x.min(RAQUETTE_DIMENSION.y) / 3.

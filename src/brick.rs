@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
+#[allow(unused_imports)]
 use crate::cons::*;
 
 #[derive(Component)]
 pub struct Brick {
     pub hp: i32,
 }
-pub const BRICK_DIMENSION: Dimension = Dimension { x: 60., y: 20. };
+pub const BRICK_DIMENSION: Vec2 = Vec2 { x: 60., y: 20. };
 
 pub fn get_brick_radius() -> f32 {
     BRICK_DIMENSION.x.min(BRICK_DIMENSION.y) / 3.

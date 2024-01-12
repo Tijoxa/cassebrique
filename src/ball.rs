@@ -224,7 +224,7 @@ fn move_ball(
 fn get_component_border(
     component_t: &Transform,
     component_radius: f32,
-    component_dimension: Dimension,
+    component_dimension: Vec2,
     ball_radius: f32,
 ) -> (f32, f32, f32, f32, f32, f32, f32, f32) {
     let x2 = component_t.translation.x - component_dimension.x / 2. + component_radius;
