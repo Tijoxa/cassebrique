@@ -23,7 +23,7 @@ jobs:
       - name: Check if version increased
         id: check_version
         run: |
-          if [[ "$NEW_VERSION" > "$OLD_VERSION" ]]; then
+          if [[ "${{ env.NEW_VERSION }}" > "${{ env.OLD_VERSION }}" ]]; then
             echo "VERSION_INCREASED=true" >> $GITHUB_ENV
           else
             echo "VERSION_INCREASED=false" >> $GITHUB_ENV
