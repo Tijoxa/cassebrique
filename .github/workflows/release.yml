@@ -22,40 +22,16 @@ jobs:
       - name: Install dependencies
         run: |
           # Add any necessary steps to install dependencies
-          sudo apt-get install -y libasound2-dev
-
-      # - name: Check for version change
-      #   id: version_check
-      #   run: |
-      #     # Extract the version from the current commit
-      #     CURRENT_VERSION=$(grep '^version =' Cargo.toml | head -1 | awk '{print $3}' | sed 's/"//g')
-
-      #     # Check if there's a previous commit
-      #     if git rev-parse HEAD^ >/dev/null 2>&1; then
-      #       # Extract the version from the previous commit
-      #       PREVIOUS_VERSION=$(git show HEAD^:Cargo.toml | grep '^version =' | head -1 | awk '{print $3}' | sed 's/"//g')
-
-      #       # Use sort -V to compare the version numbers
-      #       HIGHER_VERSION=$(echo -e "$CURRENT_VERSION\n$PREVIOUS_VERSION" | sort -V | tail -1)
-
-      #       # Check if the current version is higher than the previous version
-      #       if [ "$CURRENT_VERSION" = "$HIGHER_VERSION" ]; then
-      #         echo "changed=true" >> $GITHUB_ENV
-      #       fi
-      #     else
-      #       # If there's no previous commit, assume the version has changed
-      #       echo "changed=true" >> $GITHUB_ENV
-      #     fi
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev
 
       - name: Build and release
-        # if: ${{ steps.version_check.outputs.version_changed != '' }}
         run: |
           # Build and release binaries for Linux and Windows
           cargo build --release
           # Add more commands to create and package the binaries as needed
 
       - name: Create Release
-        # if: ${{ steps.version_check.outputs.version_changed != '' }}
         uses: softprops/action-gh-release@v1
         with:
           files: target/release/*
