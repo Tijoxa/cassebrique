@@ -2,15 +2,14 @@ name: Release Binaries
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - '*'
 
 env:
   binary: cassebrique
   add_binaries_to_github_release: true
 
 jobs:
-  # Build for Linux
   release-linux:
     runs-on: ubuntu-latest
 
@@ -57,7 +56,6 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
 
-  # Build for Windows
   release-windows:
     runs-on: windows-latest
 
