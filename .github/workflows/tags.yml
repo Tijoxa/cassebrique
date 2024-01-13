@@ -1,0 +1,58 @@
+name: Check Version and Tag
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  check-version-and-tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install cargo-make
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-make
+
+      - name: Get version from Cargo.toml
+        id: get-version
+        run: echo "::set-output name=version::$(cargo make --print-steps | grep version | cut -d' ' -f2)"
+
+      - name: Get latest tag
+        id: get-latest-tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const tags = await github.rest.repos.listTags({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            return tags.data[0].name;
+
+      - name: Compare version and tag
+        id: compare
+        run: echo "::set-output name=changed::$(if [ "${{ steps.get-version.outputs.version }}" != "${{ steps.get-latest-tag.outputs.result }}" ]; then echo 'true'; else echo 'false'; fi)"
+
+      - name: Create new tag
+        if: ${{ steps.compare.outputs.changed == 'true' }}
+        uses: actions/github-script@v5
+        with:
+          script: |
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${{ steps.get-version.outputs.version }}`,
+              sha: context.sha,
+            });
