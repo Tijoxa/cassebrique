@@ -24,9 +24,9 @@ jobs:
         id: check_version
         run: |
           if [[ "$NEW_VERSION" > "$OLD_VERSION" ]]; then
-            echo "::set-output name=VERSION_INCREASED::true"
+            echo "VERSION_INCREASED=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=VERSION_INCREASED::false"
+            echo "VERSION_INCREASED=false" >> $GITHUB_ENV
           fi
 
       - name: Create new tag
