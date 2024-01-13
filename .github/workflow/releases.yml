@@ -30,7 +30,7 @@ jobs:
           VERSION=$(grep '^version =' Cargo.toml | head -1 | awk '{print $3}' | sed 's/"//g')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           LAST_VERSION=$(git tag --sort=-creatordate | head -1 | sed 's/v//')
-          if [ "$VERSION" != "$LAST_VERSION" ]; then
+          if [ "$VERSION" >= "$LAST_VERSION" ]; then
             echo "::set-output name=changed::true"
           fi
 
