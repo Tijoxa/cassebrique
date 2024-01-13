@@ -14,16 +14,16 @@ jobs:
 
       - name: Get old version
         id: get_old_version
-        run: echo "::set-output name=VERSION::$(git show HEAD~1:Cargo.toml | grep version | head -n 1 | cut -d '"' -f 2)"
+        run: echo "OLD_VERSION=$(git show HEAD~1:Cargo.toml | grep version | head -n 1 | cut -d '"' -f 2)" >> $GITHUB_ENV
 
       - name: Get new version
         id: get_new_version
-        run: echo "::set-output name=VERSION::$(grep version Cargo.toml | head -n 1 | cut -d '"' -f 2)"
+        run: echo "NEW_VERSION=$(grep version Cargo.toml | head -n 1 | cut -d '"' -f 2)" >> $GITHUB_ENV
 
       - name: Check if version increased
         id: check_version
         run: |
-          if [[ "${{ steps.get_new_version.outputs.VERSION }}" > "${{ steps.get_old_version.outputs.VERSION }}" ]]; then
+          if [[ "$NEW_VERSION" > "$OLD_VERSION" ]]; then
             echo "::set-output name=VERSION_INCREASED::true"
           else
             echo "::set-output name=VERSION_INCREASED::false"
@@ -34,5 +34,5 @@ jobs:
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git tag ${{ steps.get_new_version.outputs.VERSION }}
-          git push origin ${{ steps.get_new_version.outputs.VERSION }}
+          git tag $NEW_VERSION
+          git push origin $NEW_VERSION
