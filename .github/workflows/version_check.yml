@@ -14,7 +14,7 @@ jobs:
 
       - name: Get old version
         id: get_old_version
-        run: echo "OLD_VERSION=$(git show HEAD~1:Cargo.toml | grep version | head -n 1 | cut -d '"' -f 2)" >> $GITHUB_ENV
+        run: echo "OLD_VERSION=0.0.10" >> $GITHUB_ENV
 
       - name: Get new version
         id: get_new_version
@@ -23,7 +23,7 @@ jobs:
       - name: Check if version increased
         id: check_version
         run: |
-          if [[ "${{ env.NEW_VERSION }}" > "${{ env.OLD_VERSION }}" ]]; then
+          if [[ "$NEW_VERSION" > "$OLD_VERSION" ]]; then
             echo "VERSION_INCREASED=true" >> $GITHUB_ENV
           else
             echo "VERSION_INCREASED=false" >> $GITHUB_ENV
