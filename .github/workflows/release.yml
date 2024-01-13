@@ -18,11 +18,8 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Build for Linux
-        run: cargo build --release --target x86_64-unknown-linux-gnu
-
-      - name: Build for Windows
-        run: cargo build --release --target x86_64-pc-windows-gnu
+      - name: Install dependencies
+        run: sudo apt-get install -y libasound2-dev
 
       - name: Check if version has changed
         id: check_version
@@ -30,8 +27,20 @@ jobs:
           VERSION=$(grep '^version =' Cargo.toml | head -1 | awk '{print $3}' | sed 's/"//g')
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           LAST_VERSION=$(git tag --sort=-creatordate | head -1 | sed 's/v//')
-          if [ "$VERSION" >= "$LAST_VERSION" ]; then
+          if [ "$VERSION" > "$LAST_VERSION" ]; then
             echo "::set-output name=changed::true"
+          fi
+
+      - name: Build for Linux
+        run: |
+          if [ "${{ steps.check_version.outputs.changed }}" == "true" ]; then
+            cargo build --release --target x86_64-unknown-linux-gnu
+          fi
+
+      - name: Build for Windows
+        run: |
+          if [ "${{ steps.check_version.outputs.changed }}" == "true" ]; then
+            cargo build --release --target x86_64-pc-windows-gnu
           fi
 
       - name: Create Release
