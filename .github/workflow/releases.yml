@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build for Linux
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Build for Windows
+        run: cargo build --release --target x86_64-pc-windows-gnu
+
+      - name: Check if version has changed
+        id: check_version
+        run: |
+          VERSION=$(grep '^version =' Cargo.toml | head -1 | awk '{print $3}' | sed 's/"//g')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          LAST_VERSION=$(git tag --sort=-creatordate | head -1 | sed 's/v//')
+          if [ "$VERSION" != "$LAST_VERSION" ]; then
+            echo "::set-output name=changed::true"
+          fi
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        if: steps.check_version.outputs.changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v2
+        if: steps.check_version.outputs.changed == 'true'
+        with:
+          name: cassebrique-linux
+          path: target/x86_64-unknown-linux-gnu/release/cassebrique
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v2
+        if: steps.check_version.outputs.changed == 'true'
+        with:
+          name: cassebrique-windows
+          path: target/x86_64-pc-windows-gnu/release/cassebrique.exe
